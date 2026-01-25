@@ -1,4 +1,5 @@
-Medical Appointment Booking System by Avirup Roy and Vadim Ukayev.
+Medical Appointment Booking System (Assignement 3)
+By: Avirup Roy and Vadim Ukayev.
 
 Contributions:
 

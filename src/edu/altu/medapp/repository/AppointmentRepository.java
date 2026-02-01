@@ -1,115 +1,169 @@
 package edu.altu.medapp.repository;
 
 import edu.altu.medapp.db.DatabaseConnection;
-import edu.altu.medapp.model.Patient;
-import edu.altu.medapp.interfaces.IPatientRepository;
+import edu.altu.medapp.model.Appointment;
+import edu.altu.medapp.interfaces.IAppointmentRepository;
 
 import java.sql.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class PatientRepository implements IPatientRepository {
+public class AppointmentRepository implements IAppointmentRepository {
 
     private Connection getConnection() throws SQLException {
         return DatabaseConnection.getInstance().getConnection();
     }
 
-    private Patient mapToPatient(ResultSet rs) throws SQLException {
-        Patient patient = new Patient();
-        patient.setId(rs.getInt("id"));
-        patient.setName(rs.getString("name"));
-        patient.setEmail(rs.getString("email"));
-        patient.setPhone(rs.getString("phone"));
-        Date dob = rs.getDate("date_of_birth");
-        if (dob != null) patient.setDateOfBirth(dob.toLocalDate());
-        return patient;
+    private Appointment mapToAppointment(ResultSet rs) throws SQLException {
+        Appointment appointment = new Appointment();
+        appointment.setId(rs.getInt("id"));
+        appointment.setPatientId(rs.getInt("patient_id"));
+        appointment.setDoctorId(rs.getInt("doctor_id"));
+        Timestamp timestamp = rs.getTimestamp("appointment_time");
+        if (timestamp != null) appointment.setAppointmentTime(timestamp.toLocalDateTime());
+        appointment.setStatus(rs.getString("status"));
+
+        appointment.setAppointmentType(rs.getString("appointment_type"));
+        appointment.setConsultationFee(rs.getDouble("consultation_fee"));
+
+        return appointment;
     }
 
     @Override
-    public void save(Patient patient) {
-        String sql = "INSERT INTO patients (name, email, phone, date_of_birth) VALUES (?, ?, ?, ?)";
+    public void save(Appointment appointment) {
+        String sql = "INSERT INTO appointments (patient_id, doctor_id, appointment_time, status, appointment_type, consultation_fee) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            pstmt.setString(1, patient.getName());
-            pstmt.setString(2, patient.getEmail());
-            pstmt.setString(3, patient.getPhone());
-            pstmt.setDate(4, Date.valueOf(patient.getDateOfBirth()));
+            pstmt.setInt(1, appointment.getPatientId());
+            pstmt.setInt(2, appointment.getDoctorId());
+            pstmt.setTimestamp(3, Timestamp.valueOf(appointment.getAppointmentTime()));
+            pstmt.setString(4, appointment.getStatus());
+            pstmt.setString(5, appointment.getAppointmentType());
+            pstmt.setDouble(6, appointment.getConsultationFee());
             pstmt.executeUpdate();
             try (ResultSet rs = pstmt.getGeneratedKeys()) {
-                if (rs.next()) patient.setId(rs.getInt(1));
+                if (rs.next()) appointment.setId(rs.getInt(1));
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error saving patient", e);
+            throw new RuntimeException("Error saving appointment", e);
         }
     }
 
     @Override
-    public Optional<Patient> findById(int id) {
-        String sql = "SELECT * FROM patients WHERE id = ?";
+    public Optional<Appointment> findById(int id) {
+        String sql = "SELECT * FROM appointments WHERE id = ?";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
-            return rs.next() ? Optional.of(mapToPatient(rs)) : Optional.empty();
+            return rs.next() ? Optional.of(mapToAppointment(rs)) : Optional.empty();
         } catch (SQLException e) {
-            throw new RuntimeException("Error finding patient by ID", e);
+            throw new RuntimeException("Error finding appointment by ID", e);
         }
     }
 
     @Override
-    public List<Patient> findAll() {
-        List<Patient> patients = new ArrayList<>();
-        String sql = "SELECT * FROM patients ORDER BY name";
+    public List<Appointment> findAll() {
+        List<Appointment> appointments = new ArrayList<>();
+        String sql = "SELECT * FROM appointments ORDER BY appointment_time DESC";
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) patients.add(mapToPatient(rs));
+            while (rs.next()) appointments.add(mapToAppointment(rs));
         } catch (SQLException e) {
-            throw new RuntimeException("Error finding all patients", e);
+            throw new RuntimeException("Error finding all appointments", e);
         }
-        return patients;
+        return appointments;
     }
 
     @Override
-    public Optional<Patient> findByEmail(String email) {
-        String sql = "SELECT * FROM patients WHERE email = ?";
+    public List<Appointment> findByPatientId(int patientId) {
+        List<Appointment> appointments = new ArrayList<>();
+        String sql = "SELECT * FROM appointments WHERE patient_id = ? ORDER BY appointment_time DESC";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, email);
+            pstmt.setInt(1, patientId);
             ResultSet rs = pstmt.executeQuery();
-            return rs.next() ? Optional.of(mapToPatient(rs)) : Optional.empty();
+            while (rs.next()) appointments.add(mapToAppointment(rs));
         } catch (SQLException e) {
-            throw new RuntimeException("Error finding patient by email", e);
+            throw new RuntimeException("Error finding appointments by patient ID", e);
+        }
+        return appointments;
+    }
+
+    @Override
+    public List<Appointment> findByDoctorId(int doctorId) {
+        List<Appointment> appointments = new ArrayList<>();
+        String sql = "SELECT * FROM appointments WHERE doctor_id = ? ORDER BY appointment_time DESC";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, doctorId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) appointments.add(mapToAppointment(rs));
+        } catch (SQLException e) {
+            throw new RuntimeException("Error finding appointments by doctor ID", e);
+        }
+        return appointments;
+    }
+
+    @Override
+    public boolean isTimeSlotBooked(int doctorId, LocalDateTime appointmentTime) {
+        String sql = "SELECT COUNT(*) FROM appointments WHERE doctor_id = ? AND appointment_time = ? AND status != 'cancelled'";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, doctorId);
+            pstmt.setTimestamp(2, Timestamp.valueOf(appointmentTime));
+            ResultSet rs = pstmt.executeQuery();
+            return rs.next() && rs.getInt(1) > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error checking time slot availability", e);
         }
     }
 
     @Override
-    public void update(Patient patient) {
-        String sql = "UPDATE patients SET name = ?, email = ?, phone = ?, date_of_birth = ? WHERE id = ?";
+    public List<Appointment> findUpcomingAppointments(int patientId) {
+        List<Appointment> appointments = new ArrayList<>();
+        String sql = "SELECT * FROM appointments WHERE patient_id = ? AND appointment_time >= NOW() AND status = 'scheduled' ORDER BY appointment_time ASC";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, patient.getName());
-            pstmt.setString(2, patient.getEmail());
-            pstmt.setString(3, patient.getPhone());
-            pstmt.setDate(4, Date.valueOf(patient.getDateOfBirth()));
-            pstmt.setInt(5, patient.getId());
+            pstmt.setInt(1, patientId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) appointments.add(mapToAppointment(rs));
+        } catch (SQLException e) {
+            throw new RuntimeException("Error finding upcoming appointments", e);
+        }
+        return appointments;
+    }
+
+    @Override
+    public void update(Appointment appointment) {
+        String sql = "UPDATE appointments SET patient_id = ?, doctor_id = ?, appointment_time = ?, status = ?, appointment_type = ?, consultation_fee = ? WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, appointment.getPatientId());
+            pstmt.setInt(2, appointment.getDoctorId());
+            pstmt.setTimestamp(3, Timestamp.valueOf(appointment.getAppointmentTime()));
+            pstmt.setString(4, appointment.getStatus());
+            pstmt.setString(5, appointment.getAppointmentType());
+            pstmt.setDouble(6, appointment.getConsultationFee());
+            pstmt.setInt(7, appointment.getId());
             pstmt.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Error updating patient", e);
+            throw new RuntimeException("Error updating appointment", e);
         }
     }
 
     @Override
     public void delete(int id) {
-        String sql = "DELETE FROM patients WHERE id = ?";
+        String sql = "DELETE FROM appointments WHERE id = ?";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, id);
             pstmt.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Error deleting patient", e);
+            throw new RuntimeException("Error deleting appointment", e);
         }
     }
 }

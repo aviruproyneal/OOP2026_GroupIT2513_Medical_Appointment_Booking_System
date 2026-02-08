@@ -17,7 +17,7 @@ public class DatabaseConnection {
             props.load(new FileInputStream("config.properties"));
 
             this.url = "jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require";
-            this.user = "postgres.slgskrauppciihcotnds";
+            this.user = "postgres.hcqvlvovnysjnftiodnl";
             this.password = props.getProperty("DB_PASSWORD");
 
             if (password == null || password.isBlank()) {

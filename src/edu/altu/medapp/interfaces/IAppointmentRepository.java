@@ -1,12 +1,9 @@
-package edu.altu.medapp.interfaces;
+package edu.altu.medapp.Shared.interfaces;
 
-import edu.altu.medapp.model.Appointment;
-import java.time.LocalDateTime;
+import edu.altu.medapp.SchedulingComponent.model.Appointment;
 import java.util.List;
 
 public interface IAppointmentRepository extends IRepository<Appointment> {
-    List<Appointment> findByPatientId(int patientId);
     List<Appointment> findByDoctorId(int doctorId);
-    boolean isTimeSlotBooked(int doctorId, LocalDateTime appointmentTime);
-    List<Appointment> findUpcomingAppointments(int patientId);
+    boolean isTimeSlotTaken(int doctorId, java.time.LocalDateTime time);
 }

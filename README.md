@@ -1,4 +1,4 @@
-Medical Appointment Booking System (Assignment 3 & 4) by Avirup Roy and Vadim Ukayev.
+Medical Appointment Booking System (Assignment 3, 4, and Endterm) by Avirup Roy and Vadim Ukayev.
 
 Contributions:
 
@@ -27,3 +27,12 @@ Vadim Ukayev:
 1. Added Appointment Model Entity
 2. Added Appointment Repository and Interface
 3. Added Service Entities (Doctor and Appointment Availability) and Exceptions
+
+Endterm:
+
+Avirup Roy:
+1. Rearranged classes into SchedulingComponent
+2. Rearranged shared classes
+
+Vadim Ukayev:
+1. Rearranged classes into DoctorManagementComponent

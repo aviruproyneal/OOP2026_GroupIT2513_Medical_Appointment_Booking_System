@@ -2,19 +2,6 @@ Medical Appointment Booking System (Assignment 3, 4, and Endterm) by Avirup Roy 
 
 Contributions:
 
-Assignment 4:
-
-Avirup Roy:
-1. Added Generic Repository Interface; Updated Existing Interfaces; Updated Supabase Database
-2. Added Entities & Factory Pattern for Appointment Types (Online, In-person, Follow-Up)
-3. Added Generic Result and Page Classes
-4. Updated Main.java with New Features and Menu
-
-Vadim Ukayev:
-1. Implemented Singleton ClinicConfig service
-2. Added Builder pattern for AppointmentSummary
-3. Added EnhancedAppointmentService with new features; Updated Appointment Files (Entity, Repository, Service)
-
 Assignment 3:
 
 Avirup Roy:
@@ -27,6 +14,19 @@ Vadim Ukayev:
 1. Added Appointment Model Entity
 2. Added Appointment Repository and Interface
 3. Added Service Entities (Doctor and Appointment Availability) and Exceptions
+
+Assignment 4:
+
+Avirup Roy:
+1. Added Generic Repository Interface; Updated Existing Interfaces; Updated Supabase Database
+2. Added Entities & Factory Pattern for Appointment Types (Online, In-person, Follow-Up)
+3. Added Generic Result and Page Classes
+4. Updated Main.java with New Features and Menu
+
+Vadim Ukayev:
+1. Implemented Singleton ClinicConfig service
+2. Added Builder pattern for AppointmentSummary
+3. Added EnhancedAppointmentService with new features; Updated Appointment Files (Entity, Repository, Service)
 
 Endterm:
 
